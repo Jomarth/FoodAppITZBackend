@@ -31,7 +31,7 @@ app.get('/health', async (req: Request, res: Response) => {
 })
 
 app.use('/api/users', jwtCheck, userRoute);
-app.use('/api/restaurante', jwtCheck, restauranteRoute);
+app.use('/api/restaurante', restauranteRoute);
 
 app.listen(port, () =>{
     console.log("App corriendo en el puerto " + port);
