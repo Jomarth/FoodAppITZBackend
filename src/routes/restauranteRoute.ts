@@ -4,6 +4,7 @@ import restauranteController from "../controllers/restauranteController";
 import {jwtCheck, jwtParse} from "../middleware/auth";
 import {validateRestauranteResponse} from "../middleware/validation";
 import RestauranteController from "../controllers/restauranteController";
+import {param} from "express-validator";
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -29,5 +30,14 @@ router.post('/',
     upload.single("imageFile"),
     validateRestauranteResponse,
     restauranteController.createRestaurant)
+
+router.get("/search/:city",
+    param("city").isString()
+        .trim()
+        .notEmpty()
+        .withMessage("El parametro ciudad debe ser un string válido"),
+    restauranteController.searchRestaurante
+
+);
 
 export default router;

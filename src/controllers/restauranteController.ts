@@ -3,15 +3,84 @@ import Restaurante from "../models/restauranteMode";
 import cloudinary from 'cloudinary';
 import mongoose from "mongoose";
 
+
+const searchRestaurante = async (req: Request, res: Response) => {
+    try{
+        const city = req.params.city;
+        const searchQuery = (req.query.searchQuery as string) || "";
+        const selectedCuisines = (req.query.selectedCuisines as string) || "";
+        const sortOptions = (req.query.sortOptions as string) || "lastUpdated";
+        const page = parseInt(req.query.page as string) || 1;
+
+        let query: any = {};
+
+        query["city"] = new RegExp(city, "i");
+
+        const cityCheck = await Restaurante.countDocuments(query)
+
+        if (cityCheck === 0) {
+            return res.status(404).json({
+                data: [],
+                pagination: {
+                    total: 0,
+                    page: 1,
+                    pages: 1
+                }
+            });
+        }
+
+        if (selectedCuisines){
+            const cuisinesArray =
+                selectedCuisines.split(',')
+                    .map( (cuisine)=> new RegExp(cuisine, "i"))
+            query["cuisines"] = {$all: cuisinesArray}
+        }
+
+        if (searchQuery) {
+            const searchRegex = new RegExp(searchQuery, "i");
+            query["$or"] = [
+                { restauranteName: searchRegex },
+                { cuisines: {$in: [searchRegex]}}
+            ]
+        }
+        const pageSize = 10;
+
+        const skip = (page - 1) * pageSize
+
+        const restaurants = await Restaurante.find(query)
+            .sort({ [sortOptions]: 1})
+            .skip(skip)
+            .limit(pageSize)
+            .lean()
+
+        const total = await Restaurante.countDocuments(query);
+
+        const response = {
+            data: restaurants,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / pageSize)
+            }
+        };
+
+        res.json(response);
+
+    }catch (error) {
+        console.log(error);
+        res.status(500).json({message: 'Error al buscar el restaurante'})
+    }
+}//Fin de searchRestaurante
+
 //funcion para actualizar un restaurante
 const updateRestaurante = async (req: Request, res: Response) => {
-    try{
+    try {
 
-        const restaurante = await Restaurante.findOne({ user: req.userId});
+        const restaurante = await Restaurante.findOne({user: req.userId});
 
-        if (!restaurante){
+        if (!restaurante) {
             return res.status(404)
-                .json({message:"Restaurante no encontrado"});
+                .json({message: "Restaurante no encontrado"});
         }
 
         restaurante.restauranteName = req.body.restauranteName;
@@ -23,7 +92,7 @@ const updateRestaurante = async (req: Request, res: Response) => {
         restaurante.menuItems = req.body.menuItems;
         restaurante.lastUpdate = new Date();
 
-        if (req.file){
+        if (req.file) {
             const imageUrl = await uploadImage(req.file as Express.Multer.File);
             restaurante.imageUrl = imageUrl;
         }
@@ -32,7 +101,7 @@ const updateRestaurante = async (req: Request, res: Response) => {
         res.status(200).send(restaurante);
 
 
-    }catch(error){
+    } catch (error) {
         console.log(error)
         res.status(500).json({message: 'Error al actualizar el restaurante'})
     }
@@ -42,15 +111,15 @@ const updateRestaurante = async (req: Request, res: Response) => {
 const getRestaurant = async (req: Request, res: Response) => {
 
     try {
-        const restaurante = await Restaurante.findOne({ user: req.userId});
-        if (!restaurante){
+        const restaurante = await Restaurante.findOne({user: req.userId});
+        if (!restaurante) {
             return res.status(404)
-                .json({message:"Restaurante no encontrado"});
+                .json({message: "Restaurante no encontrado"});
         }
         res.json(restaurante)
-    } catch (error){
+    } catch (error) {
         console.log(error);
-        res.status(500).json({ message: 'Error al obtener los datos del restaurante' })
+        res.status(500).json({message: 'Error al obtener los datos del restaurante'})
     }
 }// fin del getRestaurante
 
@@ -94,5 +163,6 @@ const uploadImage = async (file: Express.Multer.File) => {
 export default {
     getRestaurant,
     createRestaurant,
-    updateRestaurante
+    updateRestaurante,
+    searchRestaurante
 }
