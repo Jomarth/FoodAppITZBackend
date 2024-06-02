@@ -43,16 +43,16 @@ const searchRestaurante = async (req: Request, res: Response) => {
                 { cuisines: {$in: [searchRegex]}}
             ]
         }
-        const pageSize = 10;
+        const pageSize = 2;
 
-        const skip = (page - 1) * pageSize
+        const skip = (page - 1) * pageSize;
 
         const restaurants = await Restaurante.find(query)
             .sort({ [sortOptions]: 1})
             .skip(skip)
             .limit(pageSize)
-            .lean()
-
+            .lean();
+        
         const total = await Restaurante.countDocuments(query);
 
         const response = {
