@@ -149,7 +149,8 @@ const createRestaurant = async (req: Request, res: Response) => {
         })
     }
 }
-
+//tendriamos 2 restaurantes por pagina de busqueda
+const pageSize = 2;
 const uploadImage = async (file: Express.Multer.File) => {
     const image = file;
     const base64Image = Buffer.from(image.buffer).toString("base64");
