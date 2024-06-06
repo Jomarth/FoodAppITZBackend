@@ -43,7 +43,7 @@ const searchRestaurante = async (req: Request, res: Response) => {
                 { cuisines: {$in: [searchRegex]}}
             ]
         }
-        const pageSize = 2;
+        const pageSize = 10;
 
         const skip = (page - 1) * pageSize;
 
